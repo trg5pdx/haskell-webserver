@@ -28,7 +28,7 @@ main = runTCPServer Nothing "3000" talk
       unless (S.null msg) $ do
         BSU.putStrLn msg
         Prelude.putStrLn $ P.handleParse (P.parsePacket (BSU.unpack msg))
-        L.send s (BSU.pack "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nHello there!\n")
+        L.send s (BSU.pack "HTTP/1.1 200 OK\r\nContent-Length: 1\r\nContent-Type: text/plain; charset=utf-8\r\n\r\nH\n")
         talk s
 
 -- from the "network-run" package

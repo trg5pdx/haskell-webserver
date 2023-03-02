@@ -23,6 +23,7 @@ dependencies:
 - base >= 4.7 && < 5
 - network >= 3.1.2.7 && < 3.2
 - bytestring >= 0.11.4.0 && <0.12
+- split >= 0.2.3.5 && <0.3
 
 ghc-options:
 - -Wall
