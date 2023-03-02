@@ -7,6 +7,7 @@ module Main (main) where
 
 
 import Lib as L
+import Parse as P
 import Control.Concurrent (forkFinally)
 import qualified Control.Exception as E
 import Control.Monad (unless, forever, void)
@@ -16,14 +17,18 @@ import Network.Socket
 -- https://stackoverflow.com/questions/3232074/what-is-the-best-way-to-convert-string-to-bytestring
 import Data.ByteString.Char8 as BSU
 
+userInput :: IO () 
+userInput = Prelude.getLine >>= \str -> Prelude.putStrLn str
+
 main :: IO ()
 main = runTCPServer Nothing "3000" talk
   where
     talk s = do
       msg <- L.recv s
       unless (S.null msg) $ do
-        L.send s (BSU.pack "HTTP/1.1 200 OK\nContent-Type: text/plain\nHello there!\n\n")
         BSU.putStrLn msg
+        Prelude.putStrLn $ P.handleParse (P.parsePacket (BSU.unpack msg))
+        L.send s (BSU.pack "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nHello there!\n")
         talk s
 
 -- from the "network-run" package
@@ -31,6 +36,7 @@ runTCPServer :: Maybe HostName -> ServiceName -> (Socket -> IO a) -> IO a
 runTCPServer mhost port server = withSocketsDo $ do
     addr <- resolve
     E.bracket (open addr) L.close loop
+    -- cmd
   where
     resolve = do
         let hints = defaultHints {
@@ -51,3 +57,4 @@ runTCPServer mhost port server = withSocketsDo $ do
             -- non-atomic setups (e.g. spawning a subprocess to handle
             -- @conn@) before proper cleanup of @conn@ is your case
             forkFinally (server conn) (const $ gracefulClose conn 5000)
+    -- cmd = forever userInput

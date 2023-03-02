@@ -26,6 +26,7 @@ source-repository head
 library
   exposed-modules:
       Lib
+      Parse
   other-modules:
       Paths_webserver
   hs-source-dirs:
