@@ -8,17 +8,21 @@ module Main (main) where
 
 import Lib as L
 import Parse as P
+import Map as M
 import Control.Concurrent (forkFinally)
 import qualified Control.Exception as E
 import Control.Monad (unless, forever, void)
 import qualified Data.ByteString as S
 import Network.Socket
+import Data.List.Split as DS
 
 -- https://stackoverflow.com/questions/3232074/what-is-the-best-way-to-convert-string-to-bytestring
 import Data.ByteString.Char8 as BSU
 
+{-
 userInput :: IO () 
 userInput = Prelude.getLine >>= \str -> Prelude.putStrLn str
+-}
 
 main :: IO ()
 main = runTCPServer Nothing "3000" talk
@@ -27,8 +31,9 @@ main = runTCPServer Nothing "3000" talk
       msg <- L.recv s
       unless (S.null msg) $ do
         BSU.putStrLn msg
-        Prelude.putStrLn $ P.handleParse (P.parsePacket (BSU.unpack msg))
-        L.send s (BSU.pack "HTTP/1.1 200 OK\r\nContent-Length: 1\r\nContent-Type: text/plain; charset=utf-8\r\n\r\nH\n")
+        -- Prelude.putStrLn $ P.handleParse (P.newParsePacket (DS.splitOn " " (BSU.unpack msg)))
+        L.send s (BSU.pack $ M.getValue M.initializeMap (P.handleParse (P.newParsePacket (DS.splitOn " " (BSU.unpack msg)))))
+        -- L.send s (BSU.pack "HTTP/1.1 200 OK\r\nContent-Length: 1\r\nContent-Type: text/plain; charset=utf-8\r\n\r\nH\n")
         talk s
 
 -- from the "network-run" package
