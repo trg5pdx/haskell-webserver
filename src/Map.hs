@@ -5,14 +5,22 @@ module Map
   ) where
 
 import Data.Map as Map
+import Control.Monad.State
 
-initializeMap :: Map String String
+{- Go back and read more of section 12.3 in the programming in haskell book,
+   that deals with states and is probably important for this piece
+ -}
+
+type MapState = Map String String
+type GlobalMap = State MapState
+
+initializeMap :: MapState 
 initializeMap = Map.fromList[("Hello", "there"), ("how", "are you"), ("x", "5")]
 
 {- Got the minimum viable HTTP response from here: 
  - https://stackoverflow.com/questions/33784127/minimal-http-server-reply 
  - -}
-getValue :: Map String String -> String -> String
+getValue :: MapState -> String -> String
 getValue dataMap key = case Map.lookup key dataMap of
   Just x -> "HTTP/1.1 200 OK\r\nContent-Length: " ++ show (Prelude.length x) ++ "\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n" ++ x ++ "\n"
   Nothing -> "HTTP/1.1 404\r\nContent-Length: 0\r\n\n"

@@ -26,15 +26,18 @@ userInput = Prelude.getLine >>= \str -> Prelude.putStrLn str
 
 main :: IO ()
 main = runTCPServer Nothing "3000" talk
-  where
-    talk s = do
-      msg <- L.recv s
-      unless (S.null msg) $ do
-        BSU.putStrLn msg
-        -- Prelude.putStrLn $ P.handleParse (P.newParsePacket (DS.splitOn " " (BSU.unpack msg)))
-        L.send s (BSU.pack $ M.getValue M.initializeMap (P.handleParse (P.newParsePacket (DS.splitOn " " (BSU.unpack msg)))))
-        -- L.send s (BSU.pack "HTTP/1.1 200 OK\r\nContent-Length: 1\r\nContent-Type: text/plain; charset=utf-8\r\n\r\nH\n")
-        talk s
+
+talk :: Socket -> IO () 
+talk s = do
+  msg <- L.recv s
+  unless (S.null msg) $ do
+    BSU.putStrLn msg
+    -- Prelude.putStrLn $ P.handleParse (P.newParsePacket (DS.splitOn " " (BSU.unpack msg)))
+    L.send s (BSU.pack $ processMsg msg)
+    -- L.send s (BSU.pack "HTTP/1.1 200 OK\r\nContent-Length: 1\r\nContent-Type: text/plain; charset=utf-8\r\n\r\nH\n")
+    talk s
+  where 
+    processMsg packet = P.handleParse $ P.newParsePacket M.initializeMap (DS.splitOn " " (BSU.unpack packet))
 
 -- from the "network-run" package
 runTCPServer :: Maybe HostName -> ServiceName -> (Socket -> IO a) -> IO a

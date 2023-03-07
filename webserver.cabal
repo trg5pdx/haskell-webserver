@@ -37,6 +37,7 @@ library
       base >=4.7 && <5
     , bytestring >=0.11.4.0 && <0.12
     , containers
+    , mtl
     , network >=3.1.2.7 && <3.2
     , split >=0.2.3.5 && <0.3
   default-language: Haskell2010
@@ -52,6 +53,7 @@ executable webserver-exe
       base >=4.7 && <5
     , bytestring >=0.11.4.0 && <0.12
     , containers
+    , mtl
     , network >=3.1.2.7 && <3.2
     , split >=0.2.3.5 && <0.3
     , webserver
@@ -69,6 +71,7 @@ test-suite webserver-test
       base >=4.7 && <5
     , bytestring >=0.11.4.0 && <0.12
     , containers
+    , mtl
     , network >=3.1.2.7 && <3.2
     , split >=0.2.3.5 && <0.3
     , webserver
