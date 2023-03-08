@@ -6,7 +6,6 @@ module Parse
 -- import Data.List (stripPrefix)
 import Data.Maybe
 import Map as M
-import Data.Map as Map
 
 {- parsePacket :: String -> Maybe String
 parsePacket packet = do
@@ -33,7 +32,7 @@ notFoundErr = "HTTP/1.1 404\r\nContent-Length: 0\r\n\n"
 
 parsePacket :: MapState -> [String] -> GlobalMap String 
 parsePacket webMap (x:y:_) | x == "GET" = M.getValue webMap (strip y)
-                           | x == "PUT" = (M.setValue webMap (strip y) y)
+                           | x == "PUT" = (M.setValue webMap (strip y) (strip y))
                            | otherwise = M.Error (notFoundErr, webMap)
                             -- Just $ M.getValue map (strip y) -- will be for setting values
   where
