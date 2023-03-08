@@ -34,13 +34,16 @@ talk serverMap s = do
   msg <- L.recv s
   unless (S.null msg) $ do
     BSU.putStrLn msg
-    let result = processMsg msg serverMap
-    -- Prelude.putStrLn $ P.handleParse (P.parsePacket (DS.splitOn " " (BSU.unpack msg)))
-    L.send s (BSU.pack result)
-    -- L.send s (BSU.pack "HTTP/1.1 200 OK\r\nContent-Length: 1\r\nContent-Type: text/plain; charset=utf-8\r\n\r\nH\n")
-    talk serverMap s
+    case processMsg msg serverMap of
+      Put (value, newMap) -> sendLoop s value newMap
+      Get (value, currMap) -> sendLoop s value currMap
+      Error (value, currMap) -> sendLoop s value currMap
+    -- sendLoop s result serverMap
   where 
-    processMsg packet serverMap = P.handleParse $ P.parsePacket serverMap (DS.splitOn " " (BSU.unpack packet))
+    processMsg packet dataMap = P.parsePacket dataMap (DS.splitOn " " (BSU.unpack packet))
+    sendLoop sock msg updatedMap = do
+      L.send sock (BSU.pack msg)
+      talk updatedMap sock
 
 -- from the "network-run" package
 runTCPServer :: Maybe HostName -> ServiceName -> (Socket -> IO a) -> IO a

@@ -28,20 +28,21 @@ parsePacket packet = do
               Nothing
   [] -> Nothing -}
 
-parsePacket :: Map String String -> [String] -> Maybe String
-parsePacket webMap (x:y:_) | x == "GET" = Just $ M.getValue webMap (strip y)
-                           | x == "PUT" = do
-                              let _ = M.setValue webMap (strip y) y
-                              return "Added!"
-                           | otherwise = Nothing 
+notFoundErr :: String
+notFoundErr = "HTTP/1.1 404\r\nContent-Length: 0\r\n\n"
+
+parsePacket :: MapState -> [String] -> GlobalMap String 
+parsePacket webMap (x:y:_) | x == "GET" = M.getValue webMap (strip y)
+                           | x == "PUT" = (M.setValue webMap (strip y) y)
+                           | otherwise = M.Error (notFoundErr, webMap)
                             -- Just $ M.getValue map (strip y) -- will be for setting values
   where
     strip (_:xs) = xs
     strip [] = []
 
-parsePacket _ [] = Nothing
-parsePacket _ [[]] = Nothing
-parsePacket _ (_:_) = Nothing
+parsePacket webMap [] = M.Error (notFoundErr, webMap)
+parsePacket webMap [[]] = M.Error (notFoundErr, webMap)
+parsePacket webMap (_:_) = M.Error (notFoundErr, webMap)
 
 handleParse :: Maybe String -> String
 handleParse = Data.Maybe.fromMaybe "Error"
