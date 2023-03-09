@@ -28,12 +28,11 @@ talk serverMap s = do
   msg <- L.recv s
   unless (S.null msg) $ do
     BSU.putStrLn msg
-    let response = processMsg msg serverMap
+    let result = processMsg msg serverMap
+    let (response, currentMap) = P.formatResponse result
     print response
-    case response of
-      Put (value, newMap) -> sendLoop s value newMap
-      Get (value, currMap) -> sendLoop s value currMap
-      Error (value, currMap) -> sendLoop s value currMap
+    print currentMap 
+    sendLoop s response currentMap 
   where 
     processMsg packet dataMap = P.parsePacket dataMap (DS.splitOn " " (BSU.unpack packet))
     sendLoop sock msg updatedMap = do
