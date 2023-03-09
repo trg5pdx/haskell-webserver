@@ -16,12 +16,8 @@ import Network.Socket.ByteString as NB (recv, sendAll)
 class Networking s where
   connect :: Socket -> SockAddr -> s ()
   bind :: Socket -> SockAddr -> s ()
-  {- may be possible to simplify bind, as I think SockAddr may stay 
- -   consistent between runs
- - -}
   listen :: Socket -> s ()
   accept :: Socket -> s (Socket, SockAddr) 
-  -- Come back to accept, as N.accept spits out IO (Socket, SockAddr)
   send :: Socket -> S.ByteString -> s ()
   recv :: Socket -> s S.ByteString
   close :: Socket -> s ()

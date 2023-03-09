@@ -1,33 +1,9 @@
-module Parse 
-  ( parsePacket
-  , handleParse
-  ) where
+module Parse ( parsePacket ) where
 
 -- import Data.List (stripPrefix)
-import Data.Maybe
 import Data.Map as DM
 import Map as M
 import Test.HUnit
-
-{- parsePacket :: String -> Maybe String
-parsePacket packet = do
-  xs <- stripPrefix "GET " packet
-  ys <- stripPrefix "/ " xs
-  _  <- stripPrefix "HTTP" ys
-  return "valid packet!" -}
-
-{- parsePacket packet = case packet of
-  (x:xs) -> if x == "GET" then
-              case xs of 
-                (y:_) -> return (strip y)
-                [] -> Nothing
-            if x == "PUT" then
-              case xs of
-                (y:_) -> return (strip y)
-                [] -> Nothing
-            else
-              Nothing
-  [] -> Nothing -}
 
 notFoundErr :: String
 notFoundErr = "HTTP/1.1 400\r\nContent-Length: 0\r\n\n"
@@ -58,6 +34,3 @@ testParsePacket = "testParsePacket" ~:
              ~?= Error ("HTTP/1.1 400\r\nContent-Length: 0\r\n\n", 
                     (DM.fromList[("Hello", "there"), ("n", "10")]))
       ]
-
-handleParse :: Maybe String -> String
-handleParse = Data.Maybe.fromMaybe "Error"
