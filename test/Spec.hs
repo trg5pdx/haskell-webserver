@@ -32,13 +32,9 @@ testParsePacket :: Test
 testParsePacket = "testParsePacket" ~:
   TestList [ 
     parsePacket (DM.fromList[("Hello", "there"), ("n", "10")]) ["GET", "/n", "HTTP/1.1"]
-             ~?= Get ("10",
-                     DM.fromList[("Hello", "there"), ("n", "10")]
-                    ),
+             ~?= Get ("10", DM.fromList[("Hello", "there"), ("n", "10")]),
     parsePacket (DM.fromList[("Hello", "there"), ("n", "10")]) ["Hi", "this isn't a real request"]
-             ~?= Error ("Bad request", 
-                    (DM.fromList[("Hello", "there"), ("n", "10")])),
+             ~?= Error ("Bad request", DM.fromList[("Hello", "there"), ("n", "10")]),
     parsePacket (DM.fromList[("Hello", "there"), ("n", "10")]) ["GET", "/testing", "HTTP/1.1"]
-             ~?= Error ("Not found", 
-                    (DM.fromList[("Hello", "there"), ("n", "10")]))
+             ~?= Error ("Not found", DM.fromList[("Hello", "there"), ("n", "10")])
       ]

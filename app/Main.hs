@@ -5,7 +5,7 @@ module Main (main) where
  - Link: https://hackage.haskell.org/package/network-3.1.2.7/docs/Network-Socket.html
  -}
 
-import Lib as L
+import Network as L
 import Parse as P
 import Map as M
 import Control.Concurrent (forkFinally)
@@ -20,8 +20,7 @@ import Data.ByteString.Char8 as BSU
 
 main :: IO ()
 main = do
-  let serverMap = M.initializeMap 
-  runTCPServer Nothing "3000" (talk serverMap)
+  runTCPServer Nothing "3000" talk
 
 talk :: MapState -> Socket -> IO () 
 talk serverMap s = do
@@ -40,10 +39,11 @@ talk serverMap s = do
       talk updatedMap sock
 
 -- from the "network-run" package
-runTCPServer :: Maybe HostName -> ServiceName -> (Socket -> IO a) -> IO a
+runTCPServer :: Maybe HostName -> ServiceName -> (MapState -> Socket -> IO a) -> IO a
 runTCPServer mhost port server = withSocketsDo $ do
+    let serverMap = M.initializeMap 
     addr <- resolve
-    E.bracket (open addr) L.close loop
+    E.bracket (open addr) L.close (loop serverMap)
   where
     resolve = do
         let hints = defaultHints {
@@ -57,10 +57,10 @@ runTCPServer mhost port server = withSocketsDo $ do
         L.bind sock $ addrAddress addr
         L.listen sock
         return sock
-    loop sock = forever $ E.bracketOnError (L.accept sock) (L.close . fst)
+    loop serverMap sock = forever $ E.bracketOnError (L.accept sock) (L.close . fst)
         $ \(conn, _peer) -> void $
             -- 'forkFinally' alone is unlikely to fail thus leaking @conn@,
             -- but 'E.bracketOnError' above will be necessary if some
             -- non-atomic setups (e.g. spawning a subprocess to handle
             -- @conn@) before proper cleanup of @conn@ is your case
-            forkFinally (server conn) (const $ gracefulClose conn 5000)
+            forkFinally (server serverMap conn) (const $ gracefulClose conn 5000)

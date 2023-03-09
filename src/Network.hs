@@ -1,12 +1,12 @@
-module Lib
+module Network
     ( Networking
-    , Lib.connect
-    , Lib.bind
-    , Lib.listen
-    , Lib.accept
-    , Lib.send
-    , Lib.recv
-    , Lib.close
+    , Network.connect
+    , Network.bind
+    , Network.listen
+    , Network.accept
+    , Network.send
+    , Network.recv
+    , Network.close
     ) where
 
 import qualified Data.ByteString as S
