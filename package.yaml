@@ -21,6 +21,7 @@ description: Please see the README on GitHub at <https://github.com/githubuser/w
 
 dependencies:
   - base >= 4.7 && < 5
+  - HUnit
   - network >= 3.1.2.7 && < 3.2
   - bytestring >= 0.11.4.0 && <0.12
   - split >= 0.2.3.5 && <0.3

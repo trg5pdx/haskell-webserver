@@ -5,7 +5,9 @@ module Parse
 
 -- import Data.List (stripPrefix)
 import Data.Maybe
+import Data.Map as DM
 import Map as M
+import Test.HUnit
 
 {- parsePacket :: String -> Maybe String
 parsePacket packet = do
@@ -28,7 +30,7 @@ parsePacket packet = do
   [] -> Nothing -}
 
 notFoundErr :: String
-notFoundErr = "HTTP/1.1 404\r\nContent-Length: 0\r\n\n"
+notFoundErr = "HTTP/1.1 400\r\nContent-Length: 0\r\n\n"
 
 parsePacket :: MapState -> [String] -> GlobalMap String 
 parsePacket webMap (x:y:_) | x == "GET" = M.getValue webMap (strip y)
@@ -42,6 +44,20 @@ parsePacket webMap (x:y:_) | x == "GET" = M.getValue webMap (strip y)
 parsePacket webMap [] = M.Error (notFoundErr, webMap)
 parsePacket webMap [[]] = M.Error (notFoundErr, webMap)
 parsePacket webMap (_:_) = M.Error (notFoundErr, webMap)
+
+testParsePacket :: Test
+testParsePacket = "testParsePacket" ~:
+  TestList [ 
+    parsePacket (DM.fromList[("Hello", "there"), ("n", "10")]) ["GET", "/n", "HTTP/1.1"]
+             ~?= Get ("HTTP/1.1 200 OK\r\nContent-Length: 2\r\n"
+                     ++ "Content-Type: text/plain: charset=utf-8\r\n\r\n"
+                     ++ "10\n",
+                     DM.fromList[("Hello", "there"), ("n", "10")]
+                    ),
+    parsePacket (DM.fromList[("Hello", "there"), ("n", "10")]) ["Hi", "this isn't a real request"]
+             ~?= Error ("HTTP/1.1 400\r\nContent-Length: 0\r\n\n", 
+                    (DM.fromList[("Hello", "there"), ("n", "10")]))
+      ]
 
 handleParse :: Maybe String -> String
 handleParse = Data.Maybe.fromMaybe "Error"
