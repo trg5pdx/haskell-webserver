@@ -42,12 +42,10 @@ formatResponse currentMap = case currentMap of
                       then ("HTTP/1.1 404\r\nContent-Length: "
                             ++ show (Prelude.length msg)
                             ++ "\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n" 
-                            ++ "\r\n\r\n"
                             ++ msg
                             ++ "\n", current)
                       else ("HTTP/1.1 400\r\nContent-Length: "
                             ++ show (Prelude.length msg)
                             ++ "\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n" 
-                            ++ "\r\n\r\n"
                             ++ msg
                             ++ "\n", current)

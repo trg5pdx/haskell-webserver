@@ -11,6 +11,8 @@ main = do
   _ <- runTestTT testSetValue
   print "testing parse packet..."
   _ <- runTestTT testParsePacket
+  print "testing format response..."
+  _ <- runTestTT testFormatResponse
   print "finished test suite."
 
 
@@ -38,3 +40,20 @@ testParsePacket = "testParsePacket" ~:
     parsePacket (DM.fromList[("Hello", "there"), ("n", "10")]) ["GET", "/testing", "HTTP/1.1"]
              ~?= Error ("Not found", DM.fromList[("Hello", "there"), ("n", "10")])
       ]
+
+testFormatResponse :: Test
+testFormatResponse = "testFormatResponse" ~:
+  TestList [
+    formatResponse (Get ("10", DM.fromList[("Hello", "there"), ("n", "10")]))
+      ~?= ("HTTP/1.1 200 OK\r\nContent-Length: 2\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n10\n",
+             DM.fromList[("Hello", "there"), ("n", "10")]),
+    formatResponse (Put ("y", DM.fromList[("Hello", "there"), ("n", "10"), ("y", "x")]))
+      ~?= ("HTTP/1.1 201 Created\r\nContent-Location: y",
+             DM.fromList[("Hello", "there"), ("n", "10"), ("y", "x")]),
+    formatResponse (Error ("Not found", DM.fromList[("Hello", "there"), ("n", "10"), ("y", "x")]))
+      ~?= ("HTTP/1.1 404\r\nContent-Length: 9\r\nContent-Type: text/plain; charset=utf-8\r\n\r\nNot found\n",
+             DM.fromList[("Hello", "there"), ("n", "10"), ("y", "x")]),
+    formatResponse (Error ("Bad request", DM.fromList[("Hello", "there"), ("n", "10"), ("y", "x")]))
+      ~?= ("HTTP/1.1 400\r\nContent-Length: 11\r\nContent-Type: text/plain; charset=utf-8\r\n\r\nBad request\n",
+             DM.fromList[("Hello", "there"), ("n", "10"), ("y", "x")])
+  ]
