@@ -17,6 +17,9 @@ import Map as M
 import Network as L
 import Network.Socket
 import Parse as P
+import qualified Parse as P
+import qualified Parse as P
+import Network.Socket (gracefulClose)
 
 main :: IO ()
 main = do
@@ -42,9 +45,8 @@ talk serverMap s = do
 runTCPServer :: Maybe HostName -> ServiceName -> (ServerMap -> Socket -> IO a) -> IO a
 runTCPServer mhost port server = withSocketsDo $ do
   let serverMap = M.initializeMap
-  let serverState = MapState ("Initial", M.initializeMap)
   addr <- resolve
-  E.bracket (open addr) L.close (loop serverMap)
+  E.bracket (open addr) L.close (runOp serverMap)
   where
     resolve = do
       let hints =
@@ -59,6 +61,18 @@ runTCPServer mhost port server = withSocketsDo $ do
       L.bind sock $ addrAddress addr
       L.listen sock
       return sock
+    runOp serverMap sock = do
+      print "howdy"
+      (conn, _peer) <- L.accept sock
+      msg <- L.recv conn
+      let result = P.parsePacket serverMap (DS.splitOn " " (BSU.unpack msg))
+      let (response, currentMap) = P.formatResponse result
+      L.send conn (BSU.pack response)
+      -- L.close sock
+      print response
+      print currentMap
+      gracefulClose conn 5000
+      runOp currentMap sock
     loop serverMap sock = forever $
       E.bracketOnError (L.accept sock) (L.close . fst) $
         \(conn, _peer) ->

@@ -7,6 +7,13 @@ module Map
   )
 where
 
+{- 
+  Look into Debug.trace for debugging
+  Look into Control.Monad.Trans.State
+
+  also look into IORef if I have trouble with IO later
+-}
+
 import Control.Monad.State
 import Data.Map as DM
 
