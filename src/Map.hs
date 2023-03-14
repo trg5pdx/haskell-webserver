@@ -7,6 +7,7 @@ module Map
   )
 where
 
+import Control.Monad.State
 import Data.Map as DM
 
 {-
@@ -29,6 +30,8 @@ newtype MapTransformer a = MT (ServerMap -> (a, ServerMap))
 -}
 
 type ServerMap = DM.Map String String
+
+type MapState = State ServerMap
 
 data GlobalMap a = Put (a, ServerMap) | Get (a, ServerMap) | Error (a, ServerMap)
   deriving (Eq, Show)

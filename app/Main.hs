@@ -5,9 +5,10 @@ module Main (main) where
  - Link: https://hackage.haskell.org/package/network-3.1.2.7/docs/Network-Socket.html
  -}
 
-import Control.Concurrent
+import Control.Concurrent (forkFinally)
 import Control.Exception as E
 import Control.Monad (forever, unless, void)
+import Control.Monad.State
 import Data.ByteString as S
 -- https://stackoverflow.com/questions/3232074/what-is-the-best-way-to-convert-string-to-bytestring
 import Data.ByteString.Char8 as BSU
@@ -19,35 +20,31 @@ import Parse as P
 
 main :: IO ()
 main = do
-  chan <- newChan
-  writeChan chan M.initializeMap
-  runTCPServer Nothing "4700" talk chan
+  runTCPServer Nothing "4700" talk
 
-talk :: ServerMap -> Socket -> Chan ServerMap -> IO ()
-talk serverMap s chan = do
+talk :: ServerMap -> Socket -> IO ()
+talk serverMap s = do
   msg <- L.recv s
   unless (S.null msg) $ do
     BSU.putStrLn msg
-    let newMap = readChan chan
     let result = processMsg msg serverMap
     let (response, currentMap) = P.formatResponse result
-    broadcast currentMap
     print response
     print currentMap
-    sendLoop s response currentMap chan
+    sendLoop s response currentMap
   where
-    broadcast = writeChan chan
     processMsg packet dataMap = P.parsePacket dataMap (DS.splitOn " " (BSU.unpack packet))
-    sendLoop sock msg updatedMap chan = do
+    sendLoop sock msg updatedMap = do
       L.send sock (BSU.pack msg)
-      talk updatedMap sock chan
+      talk updatedMap sock
 
 -- from the "network-run" package
-runTCPServer :: Maybe HostName -> ServiceName -> (ServerMap -> Socket -> Chan ServerMap -> IO a) -> Chan ServerMap -> IO a
-runTCPServer mhost port server chan = withSocketsDo $ do
+runTCPServer :: Maybe HostName -> ServiceName -> (ServerMap -> Socket -> IO a) -> IO a
+runTCPServer mhost port server = withSocketsDo $ do
   let serverMap = M.initializeMap
+  let serverState = MapState ("Initial", M.initializeMap)
   addr <- resolve
-  E.bracket (open addr) L.close (loop serverMap chan)
+  E.bracket (open addr) L.close (loop serverMap)
   where
     resolve = do
       let hints =
@@ -62,7 +59,7 @@ runTCPServer mhost port server chan = withSocketsDo $ do
       L.bind sock $ addrAddress addr
       L.listen sock
       return sock
-    loop serverMap chan sock = forever $
+    loop serverMap sock = forever $
       E.bracketOnError (L.accept sock) (L.close . fst) $
         \(conn, _peer) ->
           void $
@@ -70,4 +67,4 @@ runTCPServer mhost port server chan = withSocketsDo $ do
             -- but 'E.bracketOnError' above will be necessary if some
             -- non-atomic setups (e.g. spawning a subprocess to handle
             -- @conn@) before proper cleanup of @conn@ is your case
-            forkFinally (server serverMap conn chan) (const $ gracefulClose conn 5000)
+            forkFinally (server serverMap conn) (const $ gracefulClose conn 5000)
