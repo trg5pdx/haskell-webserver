@@ -5,10 +5,8 @@ module Main (main) where
  - Link: https://hackage.haskell.org/package/network-3.1.2.7/docs/Network-Socket.html
  -}
 
-import Control.Concurrent (forkFinally)
 import Control.Exception as E
-import Control.Monad (forever, unless, void)
-import Control.Monad.State
+import Control.Monad (unless)
 import Data.ByteString as S
 -- https://stackoverflow.com/questions/3232074/what-is-the-best-way-to-convert-string-to-bytestring
 import Data.ByteString.Char8 as BSU
@@ -17,9 +15,6 @@ import Map as M
 import Network as L
 import Network.Socket
 import Parse as P
-import qualified Parse as P
-import qualified Parse as P
-import Network.Socket (gracefulClose)
 
 main :: IO ()
 main = do
@@ -68,17 +63,7 @@ runTCPServer mhost port server = withSocketsDo $ do
       let result = P.parsePacket serverMap (DS.splitOn " " (BSU.unpack msg))
       let (response, currentMap) = P.formatResponse result
       L.send conn (BSU.pack response)
-      -- L.close sock
       print response
       print currentMap
       gracefulClose conn 5000
       runOp currentMap sock
-    loop serverMap sock = forever $
-      E.bracketOnError (L.accept sock) (L.close . fst) $
-        \(conn, _peer) ->
-          void $
-            -- 'forkFinally' alone is unlikely to fail thus leaking @conn@,
-            -- but 'E.bracketOnError' above will be necessary if some
-            -- non-atomic setups (e.g. spawning a subprocess to handle
-            -- @conn@) before proper cleanup of @conn@ is your case
-            forkFinally (server serverMap conn) (const $ gracefulClose conn 5000)

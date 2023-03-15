@@ -7,7 +7,7 @@ module Map
   )
 where
 
-{- 
+{-
   Look into Debug.trace for debugging
   Look into Control.Monad.Trans.State
 
@@ -37,8 +37,6 @@ newtype MapTransformer a = MT (ServerMap -> (a, ServerMap))
 -}
 
 type ServerMap = DM.Map String String
-
-type MapState = State ServerMap
 
 data GlobalMap a = Put (a, ServerMap) | Get (a, ServerMap) | Error (a, ServerMap)
   deriving (Eq, Show)
