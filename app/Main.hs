@@ -6,39 +6,20 @@ module Main (main) where
  -}
 
 import Control.Exception as E
-import Control.Monad (unless)
-import Data.ByteString as S
 -- https://stackoverflow.com/questions/3232074/what-is-the-best-way-to-convert-string-to-bytestring
 import Data.ByteString.Char8 as BSU
 import Data.List.Split as DS
 import Map as M
-import Network as L
 import Network.Socket
+import Networking as L
 import Parse as P
 
 main :: IO ()
 main = do
-  runTCPServer Nothing "4700" talk
+  runTCPServer Nothing "4700"
 
-talk :: ServerMap -> Socket -> IO ()
-talk serverMap s = do
-  msg <- L.recv s
-  unless (S.null msg) $ do
-    BSU.putStrLn msg
-    let result = processMsg msg serverMap
-    let (response, currentMap) = P.formatResponse result
-    print response
-    print currentMap
-    sendLoop s response currentMap
-  where
-    processMsg packet dataMap = P.parsePacket dataMap (DS.splitOn " " (BSU.unpack packet))
-    sendLoop sock msg updatedMap = do
-      L.send sock (BSU.pack msg)
-      talk updatedMap sock
-
--- from the "network-run" package
-runTCPServer :: Maybe HostName -> ServiceName -> (ServerMap -> Socket -> IO a) -> IO a
-runTCPServer mhost port server = withSocketsDo $ do
+runTCPServer :: Maybe HostName -> ServiceName -> IO a
+runTCPServer mhost port = withSocketsDo $ do
   let serverMap = M.initializeMap
   addr <- resolve
   E.bracket (open addr) L.close (runOp serverMap)
@@ -56,14 +37,16 @@ runTCPServer mhost port server = withSocketsDo $ do
       L.bind sock $ addrAddress addr
       L.listen sock
       return sock
-    runOp serverMap sock = do
-      print "howdy"
-      (conn, _peer) <- L.accept sock
-      msg <- L.recv conn
-      let result = P.parsePacket serverMap (DS.splitOn " " (BSU.unpack msg))
-      let (response, currentMap) = P.formatResponse result
-      L.send conn (BSU.pack response)
-      print response
-      print currentMap
-      gracefulClose conn 5000
-      runOp currentMap sock
+
+runOp :: ServerMap -> Socket -> IO a
+runOp serverMap sock = do
+  (conn, _peer) <- L.accept sock
+  msg <- L.recv conn
+  let (response, currentMap) = P.formatResponse $ prepareMessage msg serverMap
+  L.send conn (BSU.pack response)
+  print response
+  print currentMap
+  gracefulClose conn 5000
+  runOp currentMap sock
+  where
+    prepareMessage msg dataMap = P.parsePacket dataMap (DS.splitOn " " (BSU.unpack msg))

@@ -1,6 +1,8 @@
 module Parse
   ( parsePacket,
     formatResponse,
+    responsePacket,
+    httpCode,
   )
 where
 
@@ -31,32 +33,28 @@ handlePut request current = case splitOn ";" request of
   [a, b] -> M.setValue current a b
   _ -> M.Error ("Bad request", current)
 
+-- TODO: Divide this into another function & write tests for it
 formatResponse :: GlobalMap String -> (String, ServerMap)
 formatResponse currentMap = case currentMap of
   Put (value, current) -> ("HTTP/1.1 201 Created\r\nContent-Location: " ++ value, current)
-  Get (value, current) ->
-    ( "HTTP/1.1 200 OK\r\nContent-Length: "
-        ++ show (Prelude.length value)
-        ++ "\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n"
-        ++ value
-        ++ "\n",
-      current
-    )
+  Get (value, current) -> (responsePacket value "OK", current)
   Error (msg, current) ->
     if msg == "Not found"
-      then
-        ( "HTTP/1.1 404\r\nContent-Length: "
-            ++ show (Prelude.length msg)
-            ++ "\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n"
-            ++ msg
-            ++ "\n",
-          current
-        )
-      else
-        ( "HTTP/1.1 400\r\nContent-Length: "
-            ++ show (Prelude.length msg)
-            ++ "\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n"
-            ++ msg
-            ++ "\n",
-          current
-        )
+      then (responsePacket msg "NF", current)
+      else (responsePacket msg "BR", current)
+
+responsePacket :: String -> String -> String
+responsePacket response respType =
+  "HTTP/1.1 "
+    ++ httpCode respType
+    ++ "Content-Length: "
+    ++ show (Prelude.length response)
+    ++ "\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n"
+    ++ response
+    ++ "\n"
+
+httpCode :: String -> String
+httpCode respType = case respType of
+  "OK" -> "200 OK\r\n"
+  "NF" -> "404\r\n"
+  _ -> "400\r\n"

@@ -14,7 +14,6 @@ where
   also look into IORef if I have trouble with IO later
 -}
 
-import Control.Monad.State
 import Data.Map as DM
 
 {-
@@ -36,6 +35,7 @@ type ServerMap = DM.Map String String
 newtype MapTransformer a = MT (ServerMap -> (a, ServerMap))
 -}
 
+-- TODO: add type for distinguishing between html/plaintext
 type ServerMap = DM.Map String String
 
 data GlobalMap a = Put (a, ServerMap) | Get (a, ServerMap) | Error (a, ServerMap)
