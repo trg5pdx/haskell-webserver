@@ -27,6 +27,7 @@ dependencies:
   - split >= 0.2.3.5 && <0.3
   - containers
   - mtl
+  - stm
 
 ghc-options:
   - -Wall
