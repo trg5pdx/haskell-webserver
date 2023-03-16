@@ -2,6 +2,7 @@ module Map
   ( initializeMap,
     getValue,
     setValue,
+    MapType (HTML, PLAINTEXT),
     ServerMap,
     GlobalMap (Put, Get, Error),
   )
@@ -35,24 +36,32 @@ type ServerMap = DM.Map String String
 newtype MapTransformer a = MT (ServerMap -> (a, ServerMap))
 -}
 
--- TODO: add type for distinguishing between html/plaintext
-type ServerMap = DM.Map String String
+data MapType = HTML | PLAINTEXT
+  deriving (Eq, Show)
 
-data GlobalMap a = Put (a, ServerMap) | Get (a, ServerMap) | Error (a, ServerMap)
+-- TODO: add type for distinguishing between html/plaintext
+type ServerMap = DM.Map String (MapType, String)
+
+data GlobalMap a = Put (a, MapType, ServerMap) | Get (a, MapType, ServerMap) | Error (a, MapType, ServerMap)
   deriving (Eq, Show)
 
 initializeMap :: ServerMap
-initializeMap = DM.fromList [("Hello", "there"), ("how", "are you"), ("x", "5")]
+initializeMap =
+  DM.fromList
+    [ ("Hello", (PLAINTEXT, "there")),
+      ("how", (PLAINTEXT, "are you")),
+      ("x", (PLAINTEXT, "5"))
+    ]
 
 {- Got the minimum viable HTTP response from here:
  - https://stackoverflow.com/questions/33784127/minimal-http-server-reply
  - -}
 getValue :: ServerMap -> String -> GlobalMap String
 getValue dataMap key = case DM.lookup key dataMap of
-  Just x -> Get (x, dataMap)
-  Nothing -> Error ("Not found", dataMap)
+  Just (dataType, value) -> Get (value, dataType, dataMap)
+  Nothing -> Error ("Not found", PLAINTEXT, dataMap)
 
-setValue :: ServerMap -> String -> String -> GlobalMap String
-setValue dataMap key value = do
-  let newMap = DM.insert key value dataMap
-  Put (key, newMap)
+setValue :: ServerMap -> String -> String -> MapType -> GlobalMap String
+setValue dataMap key value valueType = do
+  let newMap = DM.insert key (valueType, value) dataMap
+  Put (key, valueType, newMap)

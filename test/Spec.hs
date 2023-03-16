@@ -23,10 +23,11 @@ testGetValue :: Test
 testGetValue =
   "testGetValue"
     ~: TestList
-      [ getValue (DM.fromList [("Hello", "there"), ("y", "this is a test")]) "Hello"
+      [ getValue (DM.fromList [("Hello", (M.PLAINTEXT, "there")), ("y", (M.PLAINTEXT, "this is a test"))]) "Hello"
           ~?= Get
             ( "there",
-              DM.fromList [("Hello", "there"), ("y", "this is a test")]
+              M.PLAINTEXT,
+              DM.fromList [("Hello", (M.PLAINTEXT, "there")), ("y", (M.PLAINTEXT, "this is a test"))]
             )
       ]
 
@@ -34,13 +35,14 @@ testSetValue :: Test
 testSetValue =
   "testGetValue"
     ~: TestList
-      [ setValue (DM.fromList [("Hello", "there"), ("y", "this is a test")]) "Hi" "AAA"
+      [ setValue (DM.fromList [("Hello", (M.PLAINTEXT, "there")), ("y", (M.PLAINTEXT, "this is a test"))]) "Hi" "AAA" M.PLAINTEXT
           ~?= Put
             ( "Hi",
+              M.PLAINTEXT,
               DM.fromList
-                [ ("Hello", "there"),
-                  ("y", "this is a test"),
-                  ("Hi", "AAA")
+                [ ("Hello", (M.PLAINTEXT, "there")),
+                  ("y", (M.PLAINTEXT, "this is a test")),
+                  ("Hi", (M.PLAINTEXT, "AAA"))
                 ]
             )
       ]
@@ -49,33 +51,39 @@ testParsePacket :: Test
 testParsePacket =
   "testParsePacket"
     ~: TestList
-      [ parsePacket (DM.fromList [("Hello", "there"), ("n", "10")]) ["GET", "/n", "HTTP/1.1"]
-          ~?= Get ("10", DM.fromList [("Hello", "there"), ("n", "10")]),
-        parsePacket (DM.fromList [("Hello", "there"), ("n", "10")]) ["Hi", "this isn't a real request"]
-          ~?= Error ("Bad request", DM.fromList [("Hello", "there"), ("n", "10")]),
-        parsePacket (DM.fromList [("Hello", "there"), ("n", "10")]) ["GET", "/testing", "HTTP/1.1"]
-          ~?= Error ("Not found", DM.fromList [("Hello", "there"), ("n", "10")])
+      [ parsePacket (DM.fromList [("Hello", (M.PLAINTEXT, "there")), ("n", (M.PLAINTEXT, "10"))]) ["GET", "/n", "HTTP/1.1"]
+          ~?= Get ("10", M.PLAINTEXT, DM.fromList [("Hello", (M.PLAINTEXT, "there")), ("n", (M.PLAINTEXT, "10"))]),
+        parsePacket (DM.fromList [("Hello", (M.PLAINTEXT, "there")), ("n", (M.PLAINTEXT, "10"))]) ["Hi", "this isn't a real request"]
+          ~?= Error ("Bad request", M.PLAINTEXT, DM.fromList [("Hello", (M.PLAINTEXT, "there")), ("n", (M.PLAINTEXT, "10"))]),
+        parsePacket (DM.fromList [("Hello", (M.PLAINTEXT, "there")), ("n", (M.PLAINTEXT, "10"))]) ["GET", "/testing", "HTTP/1.1"]
+          ~?= Error ("Not found", M.PLAINTEXT, DM.fromList [("Hello", (M.PLAINTEXT, "there")), ("n", (M.PLAINTEXT, "10"))])
       ]
 
 testFormatResponse :: Test
 testFormatResponse =
   "testFormatResponse"
     ~: TestList
-      [ formatResponse (Get ("10", DM.fromList [("Hello", "there"), ("n", "10")]))
+      [ formatResponse (Get ("10", M.PLAINTEXT, DM.fromList [("Hello", (M.PLAINTEXT, "there")), ("n", (M.PLAINTEXT, "10"))]))
           ~?= ( "HTTP/1.1 200 OK\r\nContent-Length: 2\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n10\n",
-                DM.fromList [("Hello", "there"), ("n", "10")]
+                DM.fromList [("Hello", (M.PLAINTEXT, "there")), ("n", (M.PLAINTEXT, "10"))]
               ),
-        formatResponse (Put ("y", DM.fromList [("Hello", "there"), ("n", "10"), ("y", "x")]))
+        formatResponse
+          ( Put
+              ( "y",
+                M.PLAINTEXT,
+                DM.fromList [("Hello", (M.PLAINTEXT, "there")), ("n", (M.PLAINTEXT, "10")), ("y", (M.PLAINTEXT, "x"))]
+              )
+          )
           ~?= ( "HTTP/1.1 201 Created\r\nContent-Location: y",
-                DM.fromList [("Hello", "there"), ("n", "10"), ("y", "x")]
+                DM.fromList [("Hello", (M.PLAINTEXT, "there")), ("n", (M.PLAINTEXT, "10")), ("y", (M.PLAINTEXT, "x"))]
               ),
-        formatResponse (Error ("Not found", DM.fromList [("Hello", "there"), ("n", "10"), ("y", "x")]))
+        formatResponse (Error ("Not found", M.PLAINTEXT, DM.fromList [("Hello", (M.PLAINTEXT, "there")), ("n", (M.PLAINTEXT, "10")), ("y", (M.PLAINTEXT, "x"))]))
           ~?= ( "HTTP/1.1 404\r\nContent-Length: 9\r\nContent-Type: text/plain; charset=utf-8\r\n\r\nNot found\n",
-                DM.fromList [("Hello", "there"), ("n", "10"), ("y", "x")]
+                DM.fromList [("Hello", (M.PLAINTEXT, "there")), ("n", (M.PLAINTEXT, "10")), ("y", (M.PLAINTEXT, "x"))]
               ),
-        formatResponse (Error ("Bad request", DM.fromList [("Hello", "there"), ("n", "10"), ("y", "x")]))
+        formatResponse (Error ("Bad request", M.PLAINTEXT, DM.fromList [("Hello", (M.PLAINTEXT, "there")), ("n", (M.PLAINTEXT, "10")), ("y", (M.PLAINTEXT, "x"))]))
           ~?= ( "HTTP/1.1 400\r\nContent-Length: 11\r\nContent-Type: text/plain; charset=utf-8\r\n\r\nBad request\n",
-                DM.fromList [("Hello", "there"), ("n", "10"), ("y", "x")]
+                DM.fromList [("Hello", (M.PLAINTEXT, "there")), ("n", (M.PLAINTEXT, "10")), ("y", (M.PLAINTEXT, "x"))]
               )
       ]
 
@@ -83,9 +91,9 @@ testResponsePacket :: Test
 testResponsePacket =
   "testFormatResponse"
     ~: TestList
-      [ responsePacket "AAA" "OK"
+      [ responsePacket "AAA" "OK" M.PLAINTEXT
           ~?= "HTTP/1.1 200 OK\r\nContent-Length: 3\r\nContent-Type: text/plain; charset=utf=8\r\n\r\nAAA\n",
-        responsePacket "Not found" "NF"
+        responsePacket "Not found" "NF" M.PLAINTEXT
           ~?= "HTTP/1.1 404\r\nContent-Length: 9\r\nContent-Type: text/plain; charset=utf=8\r\n\r\nNot found\n"
       ]
 
