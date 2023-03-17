@@ -42,6 +42,7 @@ runOp :: ServerMap -> Socket -> IO a
 runOp serverMap sock = do
   (conn, _peer) <- L.accept sock
   msg <- L.recv conn
+  print msg
   let (response, currentMap) = P.formatResponse $ prepareMessage msg serverMap
   L.send conn (BSU.pack response)
   print response
@@ -49,4 +50,4 @@ runOp serverMap sock = do
   gracefulClose conn 5000
   runOp currentMap sock
   where
-    prepareMessage msg dataMap = P.parsePacket dataMap (DS.splitOn " " (BSU.unpack msg))
+    prepareMessage msg dataMap = P.newParsePacket dataMap (BSU.unpack msg)

@@ -1,5 +1,6 @@
 module Parse
   ( parsePacket,
+    newParsePacket,
     formatResponse,
     responsePacket,
     httpCode,
@@ -7,6 +8,7 @@ module Parse
   )
 where
 
+import Data.Bits (Bits (xor))
 import Data.List.Split (splitOn)
 import Map as M
 
@@ -37,31 +39,39 @@ parseHeader :: [String] -> ParseState -> ParseState
 parseHeader (x : y : xs) (key, value, ys, rType, NONE)
   | x == "GET" = (strip y, "", xs, GET, NONE)
   | x == "PUT" = (strip y, "", xs, PUT, NONE)
-  | x == "Content-Type:" = getType (key, value, ys, rType, NONE) (strip y) -- Write helper fn to return map type
-  | otherwise = ("", "Bad request", [], ERROR, NONE)
-parseHeader _ _ = ("", "Bad request", [], ERROR, NONE)
+  | x == "Content-Type:" = getType (key, value, ys, rType, NONE) y -- Write helper fn to return map type
+  | otherwise = (key, value, ys, rType, NONE)
+parseHeader _ pState = pState
 
 getType :: ParseState -> String -> ParseState
 getType (key, value, ys, rType, NONE) xs
   | xs == "text/html" = (key, value, ys, rType, HTML)
   | xs == "text/plain" = (key, value, ys, rType, PLAINTEXT)
-  | otherwise = ("", "Bad request", [], ERROR, NONE)
+  | otherwise = ("", "Bad request" ++ xs, [xs], ERROR, NONE)
 getType _ _ = ("", "Bad request", [], ERROR, NONE)
 
+-- TODO: pass ParseState through and check it as iterLines loops to check if put is progressing as intended
+-- and to catch potential errors
 newParsePacket :: ServerMap -> String -> GlobalMap String
 newParsePacket webMap packet = do
   let xs = splitOn "\r\n" packet
-  iterLines xs ""
+  iterLines webMap xs ("", "", [], OTHER, NONE)
   where
     -- need to pass through potential put value?
-    iterLines (x : xs) value = do
-      let (key, value, ys, pType, mType) = parseHeader (splitOn " " x) ("", "", [], OTHER, NONE)
-      case pType of
-        GET -> getValue webMap value
-        PUT -> iterLines xs value
-        ERROR -> M.Error (value, M.PLAINTEXT, webMap)
-        OTHER -> M.Error (value, M.PLAINTEXT, webMap)
-    iterLines [] _ = M.Error ("Bad request", M.PLAINTEXT, webMap)
+    iterLines currMap (x : xs) (key, value, ys, pType, mType) =
+      if x == ""
+        then case pType of
+          PUT -> newHandlePut key (addLines xs) mType currMap
+          _ -> M.Error ("Bad request" ++ key ++ value, M.PLAINTEXT, currMap)
+        else do
+          let (key1, value1, ys1, pType1, mType1) = parseHeader (splitOn " " x) (key, value, ys, pType, mType)
+          case pType1 of
+            GET -> getValue currMap key1
+            PUT -> iterLines currMap xs (key1, value1, ys1, pType1, mType1)
+            _ -> M.Error ("Bad request" ++ key1 ++ value1, M.PLAINTEXT, webMap)
+    iterLines currMap [] _ = M.Error ("Bad ", M.PLAINTEXT, currMap)
+    addLines (x : xs) = x ++ addLines xs
+    addLines [] = []
 
 parsePacket :: ServerMap -> [String] -> GlobalMap String
 parsePacket webMap (x : y : _)
@@ -73,6 +83,11 @@ parsePacket webMap _ = M.Error ("Bad request", M.PLAINTEXT, webMap)
 strip :: [a] -> [a]
 strip (_ : xs) = xs
 strip [] = []
+
+newHandlePut :: String -> String -> MapType -> ServerMap -> GlobalMap String
+newHandlePut key value valueType webMap = case valueType of
+  NONE -> M.Error ("Bad request", M.PLAINTEXT, webMap)
+  _ -> M.setValue webMap key value valueType
 
 handlePut :: String -> ServerMap -> MapType -> GlobalMap String
 handlePut request current requestType = case splitOn ";" request of
@@ -110,3 +125,4 @@ responseType :: MapType -> String
 responseType t = case t of
   HTML -> "\r\nContent-Type: text/html; charset=utf-8\r\n\r\n"
   PLAINTEXT -> "\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n"
+  NONE -> "" -- Come back to this, this is bad
