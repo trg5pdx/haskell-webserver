@@ -2,7 +2,7 @@ module Map
   ( initializeMap,
     getValue,
     setValue,
-    MapType (HTML, PLAINTEXT),
+    MapType (HTML, PLAINTEXT, NONE),
     ServerMap,
     GlobalMap (Put, Get, Error),
   )
@@ -36,7 +36,7 @@ type ServerMap = DM.Map String String
 newtype MapTransformer a = MT (ServerMap -> (a, ServerMap))
 -}
 
-data MapType = HTML | PLAINTEXT
+data MapType = HTML | PLAINTEXT | NONE
   deriving (Eq, Show)
 
 -- TODO: add type for distinguishing between html/plaintext
@@ -50,7 +50,44 @@ initializeMap =
   DM.fromList
     [ ("Hello", (PLAINTEXT, "there")),
       ("how", (PLAINTEXT, "are you")),
-      ("x", (PLAINTEXT, "5"))
+      ("x", (PLAINTEXT, "5")),
+      ( "index.html",
+        ( HTML,
+          "<!DOCTYPE html> \
+          \ <header>index</header> \
+          \ <p> Quis nisi anim magna cillum qui velit adipisicing est est. \
+          \ Exercitation consequat eu qui sint deserunt veniam eiusmod enim \
+          \ nisi amet dolore nulla occaecat. Non consectetur veniam commodo \
+          \ mollit minim nostrud aute. Nisi duis aliquip adipisicing ex deserunt \
+          \ commodo sint ex duis sit anim. \
+          \ </p> <br/>\
+          \ <ul> \
+          \ Wow, a list! \
+          \ <li> lorem </li>\
+          \ <li> ipsum </li>\
+          \ <li> duis </li>\
+          \ <li> idk some more latin </li>\
+          \ </ul> \
+          \ <br />\
+          \ <p> \
+          \ Proident esse do ullamco adipisicing incididunt. Non nulla elit sit ex \
+          \ incididunt adipisicing do aute ut commodo ipsum elit consectetur tempor. \
+          \ Dolor ullamco laborum mollit elit. Deserunt ex non amet duis fugiat duis \
+          \ eu ea mollit veniam. Nisi ex consectetur esse quis aliquip ex ullamco sint \
+          \ Lorem. Cillum nulla labore aliquip non cillum proident consequat voluptate \
+          \ dolor cillum. \
+          \ </p> <br/>\
+          \ <p> \
+          \ Duis amet consectetur proident excepteur fugiat cupidatat exercitation qui \
+          \ qui minim. Duis eu sint non consequat eu deserunt et minim nostrud. Laboris \
+          \ do tempor dolor culpa mollit dolore nostrud in aute. Ullamco eu nostrud sint \
+          \ aute incididunt pariatur sunt ad reprehenderit labore aute ut. Labore fugiat \
+          \ elit consequat commodo tempor excepteur officia. Consectetur laboris ex aliqua \
+          \ tempor ut occaecat aliqua id fugiat magna. \
+          \ </p> \
+          \ </html>"
+        )
+      )
     ]
 
 {- Got the minimum viable HTTP response from here:
