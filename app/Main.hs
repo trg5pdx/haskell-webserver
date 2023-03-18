@@ -8,7 +8,6 @@ module Main (main) where
 import Control.Exception as E
 -- https://stackoverflow.com/questions/3232074/what-is-the-best-way-to-convert-string-to-bytestring
 import Data.ByteString.Char8 as BSU
-import Data.List.Split as DS
 import Map as M
 import Network.Socket
 import Networking as L
@@ -50,4 +49,4 @@ runOp serverMap sock = do
   gracefulClose conn 5000
   runOp currentMap sock
   where
-    prepareMessage msg dataMap = P.newParsePacket dataMap (BSU.unpack msg)
+    prepareMessage msg dataMap = P.parsePacket dataMap (BSU.unpack msg)

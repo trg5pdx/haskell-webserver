@@ -1,0 +1,13 @@
+cradle:
+  cabal:
+    - path: "src"
+      component: "lib:webserver"
+
+    - path: "app/Main.hs"
+      component: "webserver:exe:webserver-exe"
+
+    - path: "app/Paths_webserver.hs"
+      component: "webserver:exe:webserver-exe"
+
+    - path: "test"
+      component: "webserver:test:webserver-test"
