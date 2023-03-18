@@ -12,6 +12,7 @@ import Map as M
 import Network.Socket
 import Networking as L
 import Parse as P
+import System.Timeout (timeout)
 
 main :: IO ()
 main = do
@@ -40,13 +41,19 @@ runTCPServer mhost port = withSocketsDo $ do
 runOp :: ServerMap -> Socket -> IO a
 runOp serverMap sock = do
   (conn, _peer) <- L.accept sock
-  msg <- L.recv conn
-  print msg
-  let (response, currentMap) = P.formatResponse $ prepareMessage msg serverMap
-  L.send conn (BSU.pack response)
-  print response
-  print currentMap
-  gracefulClose conn 5000
-  runOp currentMap sock
+  msg <- timeout 10000000 (L.recv conn)
+  case msg of
+    Nothing -> do
+      let _ = L.close sock :: IO ()
+      runOp serverMap sock
+    Just validMsg ->
+      do
+        print validMsg
+        let (response, currentMap) = P.formatResponse $ prepareMessage validMsg serverMap
+        L.send conn (BSU.pack response)
+        print response
+        print currentMap
+        gracefulClose conn 5000
+        runOp currentMap sock
   where
     prepareMessage msg dataMap = P.parsePacket dataMap (BSU.unpack msg)
