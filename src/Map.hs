@@ -3,8 +3,9 @@ module Map
     getValue,
     setValue,
     MapType (HTML, PLAINTEXT, NONE),
+    ResponseType (GET, PUT, ERROR, OTHER),
     ServerMap,
-    GlobalMap (Put, Get, Error),
+    Response,
   )
 where
 
@@ -20,10 +21,12 @@ import Data.Map as DM
 data MapType = HTML | PLAINTEXT | NONE
   deriving (Eq, Show)
 
+data ResponseType = GET | PUT | ERROR | OTHER
+  deriving (Eq, Show)
+
 type ServerMap = DM.Map String (MapType, String)
 
-data GlobalMap a = Put (a, MapType, ServerMap) | Get (a, MapType, ServerMap) | Error (a, MapType, ServerMap)
-  deriving (Eq, Show)
+type Response = (ResponseType, String, MapType, ServerMap)
 
 initializeMap :: ServerMap
 initializeMap =
@@ -73,12 +76,12 @@ initializeMap =
 {- Got the minimum viable HTTP response from here:
  - https://stackoverflow.com/questions/33784127/minimal-http-server-reply
  - -}
-getValue :: ServerMap -> String -> GlobalMap String
+getValue :: ServerMap -> String -> Response
 getValue dataMap key = case DM.lookup key dataMap of
-  Just (dataType, value) -> Get (value, dataType, dataMap)
-  Nothing -> Error ("Not found", PLAINTEXT, dataMap)
+  Just (dataType, value) -> (GET, value, dataType, dataMap)
+  Nothing -> (ERROR, "Not found", PLAINTEXT, dataMap)
 
-setValue :: ServerMap -> String -> String -> MapType -> GlobalMap String
+setValue :: ServerMap -> String -> String -> MapType -> Response
 setValue dataMap key value valueType = do
   let newMap = DM.insert key (valueType, value) dataMap
-  Put (key, valueType, newMap)
+  (PUT, key, valueType, newMap)

@@ -3,7 +3,6 @@ module Parse
     formatResponse,
     responsePacket,
     -- below: only exported for tests
-    ResponseType (GET, PUT, ERROR, OTHER),
     ParseState,
     parseHeader,
     getType,
@@ -18,10 +17,7 @@ where
 import Data.List.Split (splitOn)
 import Map as M
 
-data ResponseType = GET | PUT | ERROR | OTHER
-  deriving (Eq, Show)
-
--- Key, value, request type, maybe for specifying type of data
+-- Key, value, request type, type of value, packet lines, header values
 type ParseState = (String, String, ResponseType, MapType)
 
 parseHeader :: [String] -> ParseState -> ParseState
@@ -37,37 +33,37 @@ getType (key, value, rType, NONE) xs
   | xs == "text/plain" = (key, value, rType, PLAINTEXT)
 getType _ _ = ("", " invalid content type", ERROR, NONE)
 
-parsePacket :: ServerMap -> String -> GlobalMap String
+parsePacket :: ServerMap -> String -> Response
 parsePacket webMap packet = do
   let xs = splitOn "\r\n" packet
   iterLines webMap xs ("", "", OTHER, NONE)
 
-iterLines :: ServerMap -> [String] -> ParseState -> GlobalMap String
+iterLines :: ServerMap -> [String] -> ParseState -> Response
 iterLines currMap (x : xs) (key, value, pType, mType)
   | x == "" && pType == PUT = handlePut key xs mType currMap
-  | x == "" && pType /= PUT = M.Error ("Bad request; invalid header data", M.PLAINTEXT, currMap)
+  | x == "" && pType /= PUT = (ERROR, "Bad request; invalid header data", PLAINTEXT, currMap)
   | otherwise = do
       let newPState = parseHeader (splitOn " " x) (key, value, pType, mType)
       handleHeaderData currMap newPState xs
-iterLines currMap [] _ = M.Error ("Bad request: no data provided", M.PLAINTEXT, currMap)
+iterLines currMap [] _ = (ERROR, "Bad request: no data provided", PLAINTEXT, currMap)
 
 strip :: [a] -> [a]
 strip (_ : xs) = xs
 strip [] = []
 
-handleHeaderData :: ServerMap -> ParseState -> [String] -> GlobalMap String
+handleHeaderData :: ServerMap -> ParseState -> [String] -> Response
 handleHeaderData currMap (key, value, pType, mType) xs = case pType of
   GET -> getValue currMap key
   PUT -> iterLines currMap xs (key, value, pType, mType)
-  _ -> M.Error ("Bad request: invalid headers", M.PLAINTEXT, currMap)
+  _ -> (ERROR, "Bad request: invalid headers", PLAINTEXT, currMap)
 
-handlePut :: String -> [String] -> MapType -> ServerMap -> GlobalMap String
+handlePut :: String -> [String] -> MapType -> ServerMap -> Response
 handlePut key value valueType webMap = case valueType of
-  NONE -> M.Error ("Bad request: no type provided", M.PLAINTEXT, webMap)
+  NONE -> (ERROR, "Bad request: no type provided", PLAINTEXT, webMap)
   _ ->
     if badKeyValueCheck key value
-      then M.Error ("Bad request: no location or value provided", M.PLAINTEXT, webMap)
-      else M.setValue webMap key (addLines value) valueType
+      then (ERROR, "Bad request: no location or value provided", PLAINTEXT, webMap)
+      else setValue webMap key (addLines value) valueType
   where
     addLines (x : xs) = x ++ addLines xs
     addLines [] = []
@@ -79,11 +75,11 @@ badKeyValueCheck key value
   | value == [""] = True
   | otherwise = False
 
-formatResponse :: GlobalMap String -> (String, ServerMap)
+formatResponse :: Response -> (String, ServerMap)
 formatResponse currentMap = case currentMap of
-  Put (value, _, current) -> ("HTTP/1.1 201 Created\r\nContent-Location: " ++ value, current)
-  Get (value, valueType, current) -> (responsePacket value "OK" valueType, current)
-  Error (msg, valueType, current) ->
+  (PUT, value, _, current) -> ("HTTP/1.1 201 Created\r\nContent-Location: " ++ value, current)
+  (GET, value, valueType, current) -> (responsePacket value "OK" valueType, current)
+  (_, msg, valueType, current) ->
     if msg == "Not found"
       then (responsePacket msg "NF" valueType, current)
       else (responsePacket msg "BR" valueType, current)

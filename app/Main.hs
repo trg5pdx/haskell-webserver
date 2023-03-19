@@ -20,7 +20,7 @@ main = do
 
 runTCPServer :: Maybe HostName -> ServiceName -> IO a
 runTCPServer mhost port = withSocketsDo $ do
-  let serverMap = M.initializeMap
+  let serverMap = initializeMap
   addr <- resolve
   E.bracket (open addr) L.close (runOp serverMap)
   where
