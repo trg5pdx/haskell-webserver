@@ -22,8 +22,8 @@ type ParseState = (String, String, ResponseType, MapType)
 
 parseHeader :: [String] -> ParseState -> ParseState
 parseHeader (x : y : _) (key, value, rType, None)
-  | x == "Get" = (strip y, "", Get, None)
-  | x == "Put" = (strip y, "", Put, None)
+  | x == "GET" = (strip y, "", Get, None)
+  | x == "PUT" = (strip y, "", Put, None)
   | x == "Content-Type:" = getDataType (key, value, rType, None) y
 parseHeader _ pState = pState
 

@@ -12,40 +12,57 @@ import Map as M
 import Network.Socket
 import Networking as L
 import Parse as P
+import System.Environment (getArgs)
 import System.Timeout (timeout)
 
 main :: IO ()
 main = do
-  runTCPServer Nothing "4700"
+  args <- getArgs
+  let (host, port) = getHostPort args
+  runWebServer host port
 
-runTCPServer :: Maybe HostName -> ServiceName -> IO a
-runTCPServer mhost port = withSocketsDo $ do
+getHostPort :: [String] -> (Maybe HostName, ServiceName)
+getHostPort [x, y] = (Just x, y)
+getHostPort _ = (Nothing, "4700")
+
+runWebServer :: Maybe HostName -> ServiceName -> IO a
+runWebServer mhost port = withSocketsDo $ do
   let serverMap = initializeMap
-  addr <- resolve
-  E.bracket (open addr) L.close (runOp serverMap)
-  where
-    resolve = do
-      let hints =
-            defaultHints
-              { addrFlags = [AI_PASSIVE],
-                addrSocketType = Stream
-              }
-      Prelude.head <$> getAddrInfo (Just hints) mhost (Just port)
-    open addr = E.bracketOnError (openSocket addr) L.close $ \sock -> do
-      setSocketOption sock ReuseAddr 1
-      withFdSocket sock setCloseOnExecIfNeeded
-      L.bind sock $ addrAddress addr
-      L.listen sock
-      return sock
+  addr <- resolve mhost port
+  E.bracket (open addr) L.close (mapOperations serverMap)
 
-runOp :: ServerMap -> Socket -> IO a
-runOp serverMap sock = do
+resolve :: Maybe HostName -> ServiceName -> IO AddrInfo
+resolve mhost port = do
+  let hints =
+        defaultHints
+          { addrFlags = [AI_ADDRCONFIG],
+            addrSocketType = Stream
+          }
+  {- addr : _ <- try $
+    catch
+      (getAddrInfo (Just hints) mhost (Just port))
+      (\e -> do
+        let _ = print e
+        getAddrInfo (Just hints) Nothing (Just "4700")) -}
+  addr : _ <- getAddrInfo (Just hints) mhost (Just port)
+  return addr
+
+open :: AddrInfo -> IO Socket
+open addr = E.bracketOnError (openSocket addr) L.close $ \sock -> do
+  setSocketOption sock ReuseAddr 1
+  withFdSocket sock setCloseOnExecIfNeeded
+  L.bind sock $ addrAddress addr
+  L.listen sock
+  return sock
+
+mapOperations :: ServerMap -> Socket -> IO a
+mapOperations serverMap sock = do
   (conn, _peer) <- L.accept sock
   msg <- timeout 10000000 (L.recv conn)
   case msg of
     Nothing -> do
       let _ = L.close sock :: IO ()
-      runOp serverMap sock
+      mapOperations serverMap sock
     Just validMsg ->
       do
         print validMsg
@@ -54,6 +71,6 @@ runOp serverMap sock = do
         print response
         print currentMap
         gracefulClose conn 5000
-        runOp currentMap sock
+        mapOperations currentMap sock
   where
     prepareMessage msg dataMap = P.parsePacket dataMap (BSU.unpack msg)

@@ -20,7 +20,7 @@ testParsePacket =
                 ("n", (Plaintext, "10"))
               ]
           )
-          "Get /n HTTP/1.1"
+          "GET /n HTTP/1.1"
           ~?= ( Get,
                 "10",
                 Plaintext,
@@ -50,7 +50,7 @@ testParsePacket =
                 ("n", (Plaintext, "10"))
               ]
           )
-          "Get /testing HTTP/1.1"
+          "GET /testing HTTP/1.1"
           ~?= ( Error,
                 "Not found",
                 Plaintext,

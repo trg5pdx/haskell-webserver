@@ -18,9 +18,9 @@ testParseHeader :: Test
 testParseHeader =
   "testParseHeader"
     ~: TestList
-      [ parseHeader ["Get", "/test", "HTTP/1.1"] ("", "", Other, None)
+      [ parseHeader ["GET", "/test", "HTTP/1.1"] ("", "", Other, None)
           ~?= ("test", "", Get, None),
-        parseHeader ["Put", "/i.html", "HTTP/1.1"] ("", "", Other, None)
+        parseHeader ["PUT", "/i.html", "HTTP/1.1"] ("", "", Other, None)
           ~?= ("i.html", "", Put, None),
         parseHeader ["Content-Type:", "text/plain"] ("a", "", Put, None)
           ~?= ("a", "", Put, Plaintext),
@@ -42,7 +42,7 @@ testIterLines =
                 ("n", (Plaintext, "10"))
               ]
           )
-          ["Get /index.html HTTP/1.1"]
+          ["GET /index.html HTTP/1.1"]
           ("", "", Other, None)
           ~?= ( Get,
                 "<!Doctype html><h1>An html page</h1></html>",
@@ -58,7 +58,7 @@ testIterLines =
                 ("n", (Plaintext, "10"))
               ]
           )
-          ["Put /text HTTP/1.1", "Content-Type: text/plain", "", "wow, text!"]
+          ["PUT /text HTTP/1.1", "Content-Type: text/plain", "", "wow, text!"]
           ("", "", Other, None)
           ~?= ( Put,
                 "text",
@@ -75,7 +75,7 @@ testIterLines =
                 ("n", (Plaintext, "10"))
               ]
           )
-          ["Put /text HTTP/1.1", "Content-Type: text/plain", "", "wow, text!"]
+          ["PUT /text HTTP/1.1", "Content-Type: text/plain", "", "wow, text!"]
           ("", "", Other, None)
           ~?= ( Put,
                 "text",
@@ -92,7 +92,7 @@ testIterLines =
                 ("n", (Plaintext, "10"))
               ]
           )
-          ["Get /bleh HTTP/1.1"]
+          ["GET /bleh HTTP/1.1"]
           ("", "", Other, None)
           ~?= ( Error,
                 "Not found",
