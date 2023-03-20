@@ -1,12 +1,6 @@
 module Main (main) where
 
-{- The code below was pulled from the network socket page linked below,
- - which had an example for a basic web server
- - Link: https://hackage.haskell.org/package/network-3.1.2.7/docs/Network-Socket.html
- -}
-
 import Control.Exception as E
--- https://stackoverflow.com/questions/3232074/what-is-the-best-way-to-convert-string-to-bytestring
 import Data.ByteString.Char8 as BSU
 import Map as M
 import Network.Socket
@@ -29,7 +23,7 @@ runWebServer :: Maybe HostName -> ServiceName -> IO a
 runWebServer mhost port = withSocketsDo $ do
   let serverMap = initializeMap
   addr <- resolve mhost port
-  E.bracket (open addr) L.close (mapOperations serverMap)
+  E.bracket (openConn addr) L.close (mapOperations serverMap)
 
 resolve :: Maybe HostName -> ServiceName -> IO AddrInfo
 resolve mhost port = do
@@ -47,8 +41,8 @@ resolve mhost port = do
   addr : _ <- getAddrInfo (Just hints) mhost (Just port)
   return addr
 
-open :: AddrInfo -> IO Socket
-open addr = E.bracketOnError (openSocket addr) L.close $ \sock -> do
+openConn :: AddrInfo -> IO Socket
+openConn addr = E.bracketOnError (openSocket addr) L.close $ \sock -> do
   setSocketOption sock ReuseAddr 1
   withFdSocket sock setCloseOnExecIfNeeded
   L.bind sock $ addrAddress addr

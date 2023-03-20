@@ -73,9 +73,6 @@ initializeMap =
       )
     ]
 
-{- Got the minimum viable HTTP response from here:
- - https://stackoverflow.com/questions/33784127/minimal-http-server-reply
- - -}
 getValue :: ServerMap -> String -> Response
 getValue dataMap key = case DM.lookup key dataMap of
   Just (dataType, value) -> (Get, value, dataType, dataMap)

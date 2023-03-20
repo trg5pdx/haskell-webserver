@@ -67,12 +67,35 @@ structure of the program would be linear rather than be a tree. This also lead t
 problem of a client never sending a command, which would then block other clients from
 connecting, but that was fixed by using a timeout.
 
+After I got the project mostly working, I went on to refactor it, and improve on the
+code already there to get it to do more of what I wanted. This was difficult as I
+would run into issues with how I should approach splitting apart larger functions,
+or how I should rename functions/types/variables to make it more clear what they do,
+or how to change my defined types to make more sense with newer types I introduced.
+I did run into the problem of creating Response and ParseState to essentially be
+tuples with 4 different values within it, which I fear that could be confusing to
+someone reading what I've done without knowing what my types are/mean. I tried to
+look into naming individual values within a type since I thought I saw it somewhere,
+but from what I can tell it isn't acutally possible.
+
 Another big issue I ran into was how to deal with parsing. At first, I took a lazy
 approach where I essentially ignored all other data besides the first two words in a
 message, but I started to run into issues with it when I wanted to send PUT requests
 to the server. It took a while to work it out, but I came up with a solution that
 processes each packet by line, and then set up a state to keep track of things as it
 iterated through the lines of the request. While I like this way better as it allowed
-for me to send multiline PUT requests, and send in a valid html file, but I think it
-could be better. I've at least split up the functionality into multiple functions, but
-I still feel that it could be improved upon.
+for me to send multiline PUT requests/send in a valid html file, I think it
+could be better. I've at least split up the functionality into multiple functions,
+but I still feel that it could be improved upon. I've implemented a parser for
+multiline packets before, but that was in python. While I was working on this parser,
+I kept thinking back to that one I wrote, which also led me to try to approach it in
+a more iterative way, which I think caused issues for me.
+
+## Resources I used
+
+Below are some resources I used while working on this project.
+
+The code I used to kickstart developing the web server came from an example on the
+network package page [here](https://hackage.haskell.org/package/network-3.1.2.7/docs/Network-Socket.html)
+
+Got the minimum viable HTTP response packet from [here](https://stackoverflow.com/questions/33784127/minimal-http-server-reply)
