@@ -1,6 +1,6 @@
 module ParseHelperTests
   ( testParseHeader,
-    testIterLines,
+    testProcessPacketLines,
     testHandleHeaderData,
     testHandlePut,
     testGetDataType,
@@ -32,11 +32,11 @@ testParseHeader =
           ~?= ("", "", Other, None)
       ]
 
-testIterLines :: Test
-testIterLines =
-  "testIterLines"
+testProcessPacketLines :: Test
+testProcessPacketLines =
+  "testProcessPacketLines"
     ~: TestList
-      [ iterLines
+      [ processPacketLines
           ( DM.fromList
               [ ("index.html", (Html, "<!Doctype html><h1>An html page</h1></html>")),
                 ("n", (Plaintext, "10"))
@@ -52,7 +52,7 @@ testIterLines =
                     ("n", (Plaintext, "10"))
                   ]
               ),
-        iterLines
+        processPacketLines
           ( DM.fromList
               [ ("index.html", (Html, "<!Doctype html>test</html>")),
                 ("n", (Plaintext, "10"))
@@ -69,7 +69,7 @@ testIterLines =
                     ("text", (Plaintext, "wow, text!"))
                   ]
               ),
-        iterLines
+        processPacketLines
           ( DM.fromList
               [ ("index.html", (Html, "<!Doctype html>test</html>")),
                 ("n", (Plaintext, "10"))
@@ -86,7 +86,7 @@ testIterLines =
                     ("text", (Plaintext, "wow, text!"))
                   ]
               ),
-        iterLines
+        processPacketLines
           ( DM.fromList
               [ ("index.html", (Html, "<!Doctype html>test</html>")),
                 ("n", (Plaintext, "10"))
@@ -102,7 +102,7 @@ testIterLines =
                     ("n", (Plaintext, "10"))
                   ]
               ),
-        iterLines
+        processPacketLines
           ( DM.fromList
               [ ("index.html", (Html, "<!Doctype html>test</html>")),
                 ("n", (Plaintext, "10"))

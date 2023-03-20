@@ -16,7 +16,7 @@ main = do
   print "testing parse packet..."
   _ <- runTestTT testParsePacket
   print "testing iter lines..."
-  _ <- runTestTT testIterLines
+  _ <- runTestTT testProcessPacketLines
   print "testing handle header data..."
   _ <- runTestTT testHandleHeaderData
   print "testing handle put..."
