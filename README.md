@@ -99,3 +99,7 @@ The code I used to kickstart developing the web server came from an example on t
 network package page [here](https://hackage.haskell.org/package/network-3.1.2.7/docs/Network-Socket.html)
 
 Got the minimum viable HTTP response packet from [here](https://stackoverflow.com/questions/33784127/minimal-http-server-reply)
+
+Used this for figuring out how to move my parser helper functions into an internal
+module to keep those functions from being exposed, while allowing for it to be
+testable [here](https://lhbg-book.link/03-html/07-internal_modules.html)

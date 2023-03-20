@@ -55,7 +55,7 @@ mapOperations serverMap sock = do
   msg <- timeout 10000000 (L.recv conn)
   case msg of
     Nothing -> do
-      let _ = L.close sock :: IO ()
+      L.close sock
       mapOperations serverMap sock
     Just validMsg ->
       do

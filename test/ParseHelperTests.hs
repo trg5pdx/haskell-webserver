@@ -11,7 +11,7 @@ where
 
 import Data.Map as DM
 import Map as M
-import Parse as P
+import Parse.Internal
 import Test.HUnit
 
 testParseHeader :: Test

@@ -28,6 +28,7 @@ library
       Map
       Networking
       Parse
+      Parse.Internal
   other-modules:
       Paths_webserver
   hs-source-dirs:
