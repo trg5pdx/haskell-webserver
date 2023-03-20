@@ -67,6 +67,9 @@ test-suite webserver-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      MapTests
+      ParseHelperTests
+      ParseTests
       Paths_webserver
   hs-source-dirs:
       test

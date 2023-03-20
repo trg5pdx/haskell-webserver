@@ -33,21 +33,21 @@ This project contains three different modules for networking operations, with
 the functions from those modules being ran in app/Main.hs. Below, there's some
 information about the modules in this project:
 
-# Networking
+## Networking
 
 Contains a typeclass for defining networking related functions. Mainly this was done
 for the sake of simplifying network functions to only need a socket to run. It could
 also be used for mock testing the network functionality, but that hasn't been done
 for this project.
 
-# Map
+## Map
 
 This module contains the definitions for the map thats storing the keys/values, the
 type that determines what value each value in the map is, and a definition for the
 result of map operations. This module's main purpose is to initialize a map, obtain
 data from the map using a key, and put data onto the map with a key, value, and a type.
 
-# Parse
+## Parse
 
 This module's main purpose is to take the HTTP messages sent in from the client,
 interpret them, and then send back an appropriate response. This can involve sending
@@ -57,7 +57,7 @@ case of a user sending a key that isn't in the map, or the message was sent inco
 so the server needs to inform clients that the message sent was wrong and why it
 was wrong.
 
-# Reflection
+## Reflection
 
 Overall, I think the project went alright. I ran into a few different roadblocks, with
 the biggest one being the trouble I had with getting new clients to see changes to the

@@ -2,8 +2,8 @@ module Map
   ( initializeMap,
     getValue,
     setValue,
-    MapType (HTML, PLAINTEXT, NONE),
-    ResponseType (GET, PUT, ERROR, OTHER),
+    MapType (Html, Plaintext, None),
+    ResponseType (Get, Put, Error, Other),
     ServerMap,
     Response,
   )
@@ -18,10 +18,10 @@ where
 
 import Data.Map as DM
 
-data MapType = HTML | PLAINTEXT | NONE
+data MapType = Html | Plaintext | None
   deriving (Eq, Show)
 
-data ResponseType = GET | PUT | ERROR | OTHER
+data ResponseType = Get | Put | Error | Other
   deriving (Eq, Show)
 
 type ServerMap = DM.Map String (MapType, String)
@@ -31,12 +31,12 @@ type Response = (ResponseType, String, MapType, ServerMap)
 initializeMap :: ServerMap
 initializeMap =
   DM.fromList
-    [ ("Hello", (PLAINTEXT, "there")),
-      ("how", (PLAINTEXT, "are you")),
-      ("x", (PLAINTEXT, "5")),
+    [ ("Hello", (Plaintext, "there")),
+      ("how", (Plaintext, "are you")),
+      ("x", (Plaintext, "5")),
       ( "index.html",
-        ( HTML,
-          "<!DOCTYPE html> \
+        ( Html,
+          "<!Doctype html> \
           \ <header>index</header> \
           \ <p> Quis nisi anim magna cillum qui velit adipisicing est est. \
           \ Exercitation consequat eu qui sint deserunt veniam eiusmod enim \
@@ -78,10 +78,10 @@ initializeMap =
  - -}
 getValue :: ServerMap -> String -> Response
 getValue dataMap key = case DM.lookup key dataMap of
-  Just (dataType, value) -> (GET, value, dataType, dataMap)
-  Nothing -> (ERROR, "Not found", PLAINTEXT, dataMap)
+  Just (dataType, value) -> (Get, value, dataType, dataMap)
+  Nothing -> (Error, "Not found", Plaintext, dataMap)
 
 setValue :: ServerMap -> String -> String -> MapType -> Response
 setValue dataMap key value valueType = do
   let newMap = DM.insert key (valueType, value) dataMap
-  (PUT, key, valueType, newMap)
+  (Put, key, valueType, newMap)
