@@ -28,29 +28,32 @@ getHostPort _ = (Nothing, "4700")
 runWebServer :: Maybe HostName -> ServiceName -> IO a
 runWebServer mhost port = withSocketsDo $ do
   let serverMap = initializeMap
-  addr <- resolve
+  addr <- resolve mhost port
   E.bracket (open addr) L.close (mapOperations serverMap)
-  where
-    resolve = do
-      let hints =
-            defaultHints
-              { addrFlags = [AI_PASSIVE],
-                addrSocketType = Stream
-              }
-      {- addr : _ <- try $
-        catch
-          (getAddrInfo (Just hints) mhost (Just port))
-          (\e -> do
-            let _ = print e
-            getAddrInfo (Just hints) Nothing (Just "4700")) -}
-      addr : _ <- getAddrInfo (Just hints) mhost (Just port)
-      return addr
-    open addr = E.bracketOnError (openSocket addr) L.close $ \sock -> do
-      setSocketOption sock ReuseAddr 1
-      withFdSocket sock setCloseOnExecIfNeeded
-      L.bind sock $ addrAddress addr
-      L.listen sock
-      return sock
+
+resolve :: Maybe HostName -> ServiceName -> IO AddrInfo
+resolve mhost port = do
+  let hints =
+        defaultHints
+          { addrFlags = [AI_PASSIVE],
+            addrSocketType = Stream
+          }
+  {- addr : _ <- try $
+    catch
+      (getAddrInfo (Just hints) mhost (Just port))
+      (\e -> do
+        let _ = print e
+        getAddrInfo (Just hints) Nothing (Just "4700")) -}
+  addr : _ <- getAddrInfo (Just hints) mhost (Just port)
+  return addr
+
+open :: AddrInfo -> IO Socket
+open addr = E.bracketOnError (openSocket addr) L.close $ \sock -> do
+  setSocketOption sock ReuseAddr 1
+  withFdSocket sock setCloseOnExecIfNeeded
+  L.bind sock $ addrAddress addr
+  L.listen sock
+  return sock
 
 mapOperations :: ServerMap -> Socket -> IO a
 mapOperations serverMap sock = do
