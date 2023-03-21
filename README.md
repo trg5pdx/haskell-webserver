@@ -20,6 +20,13 @@ to start the server on localhost (port 4700):
 stack run
 ```
 
+You can also provide a hostname and port from the commandline, although
+the program will close if you provide incorrect arguments:
+
+```
+stack run localhost 3000
+```
+
 If you want to run the tests written for the modules in this project,
 you can run:
 
@@ -42,20 +49,29 @@ for this project.
 
 ## Map
 
-This module contains the definitions for the map thats storing the keys/values, the
-type that determines what value each value in the map is, and a definition for the
-result of map operations. This module's main purpose is to initialize a map, obtain
-data from the map using a key, and put data onto the map with a key, value, and a type.
+This module is meant for handling all data in the server that the user will be
+getting data from, or putting their data into. Data is stored into a key/value
+map that only stays in memory and doesn't write to file, so if the server will
+to go down, it would lose everything that was inserted the last time it was
+ran. This module contains functions for initializing a map, and functions for
+getting data from it with a key, or inserting data with a key, value, and a
+type.
 
 ## Parse
 
 This module's main purpose is to take the HTTP messages sent in from the client,
 interpret them, and then send back an appropriate response. This can involve sending
 back a value if theres one in the map, returning that they successfully put a value
-onto the map at a key, or returning an error. The errors return back not found in the
-case of a user sending a key that isn't in the map, or the message was sent incorrectly,
-so the server needs to inform clients that the message sent was wrong and why it
-was wrong.
+onto the map at a key, or returning an error. There are a few different errors that
+can occur. It can send back a "Not found" error in the case where no value was found
+associated with the key the client provided, or send back a "bad request" error which
+occurs when an invalid request was sent into the server. In the latter case, the server
+sends back a message telling the user what part it had issues with.
+
+This module was split up to have an internal version containing helper
+functions to reduce the overall size of functions. This internal module is only
+used within Parse and in the testing suite, and these functions are expected to
+be ran only from within the main parser functions.
 
 ## Reflection
 
