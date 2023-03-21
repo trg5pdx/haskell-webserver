@@ -18,12 +18,17 @@ where
 
 import Data.Map as DM
 
+-- | defines the type of the data being stored in the map so it can be
+-- | displayed correctly, None is the default; will cause errors in parsing
 data MapType = Html | Plaintext | None
   deriving (Eq, Show)
 
+-- | defines the type of response to a request from a client, other is the
+-- | default, and will spit back an error if it makes it through parsing
 data ResponseType = Get | Put | Error | Other
   deriving (Eq, Show)
 
+-- | used for the server map itself
 type ServerMap = DM.Map String (MapType, String)
 
 type Response = (ResponseType, String, MapType, ServerMap)

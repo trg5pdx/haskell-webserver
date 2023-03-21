@@ -22,25 +22,20 @@ getHostPort _ = (Nothing, "4700")
 runWebServer :: Maybe HostName -> ServiceName -> IO a
 runWebServer mhost port = withSocketsDo $ do
   let serverMap = initializeMap
-  addr <- resolve mhost port
+  addr <- resolveAddr mhost port
   E.bracket (openConn addr) L.close (mapOperations serverMap)
 
-resolve :: Maybe HostName -> ServiceName -> IO AddrInfo
-resolve mhost port = do
+resolveAddr :: Maybe HostName -> ServiceName -> IO AddrInfo
+resolveAddr mhost port = do
   let hints =
         defaultHints
           { addrFlags = [AI_PASSIVE],
             addrSocketType = Stream
           }
-  {- addr : _ <- try $
-    catch
-      (getAddrInfo (Just hints) mhost (Just port))
-      (\e -> do
-        let _ = print e
-        getAddrInfo (Just hints) Nothing (Just "4700")) -}
   addr : _ <- getAddrInfo (Just hints) mhost (Just port)
   return addr
 
+-- | sets up the connection for accepting clients
 openConn :: AddrInfo -> IO Socket
 openConn addr = E.bracketOnError (openSocket addr) L.close $ \sock -> do
   setSocketOption sock ReuseAddr 1
@@ -49,6 +44,8 @@ openConn addr = E.bracketOnError (openSocket addr) L.close $ \sock -> do
   L.listen sock
   return sock
 
+-- | waits for requests, processes requests, and sends back a response, closes
+-- | conn. and loops with the updated map so new clients see the changes
 mapOperations :: ServerMap -> Socket -> IO a
 mapOperations serverMap sock = do
   (conn, _peer) <- L.accept sock
