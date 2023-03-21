@@ -56,7 +56,7 @@ handlePut key value valueType webMap = case valueType of
       then (Error, "Bad request: no location or value provided", Plaintext, webMap)
       else setValue webMap key (addLines value) valueType
   where
-    addLines (x : xs) = x ++ addLines xs
+    addLines (x : xs) = x ++ "\n" ++ addLines xs
     addLines [] = []
 
 -- | checks if the key or the value are invalid before sending data into map
